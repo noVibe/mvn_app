@@ -19,7 +19,7 @@ public class EmployeeDAOImpl implements EmployeeDAO {
     public void addEmployee(Employee employee) throws SQLException {
         String sqlMessage = "insert into employee (id, first_name, last_name, gender, age, city_id) values " +
                 "(?, ?, ?, ?, ?, (select city.city_id from city where city_name = ?));";
-        try (PreparedStatement preparedStatement = getPreparedStatement(sqlMessage);){
+        try (PreparedStatement preparedStatement = getPreparedStatement(sqlMessage)) {
             preparedStatement.setInt(1, employee.getId());
             preparedStatement.setString(2, employee.getFirstName());
             preparedStatement.setString(3, employee.getLastName());
@@ -38,13 +38,12 @@ public class EmployeeDAOImpl implements EmployeeDAO {
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             City city = getCityByEmployeeID(resultSet.getInt(1));
-            Employee employee = new Employee(resultSet.getInt(1),
+            return new Employee(resultSet.getInt(1),
                     resultSet.getString(2),
                     resultSet.getString(3),
                     resultSet.getString(4),
                     resultSet.getInt(5),
                     city);
-            return employee;
         }
     }
 
@@ -79,36 +78,19 @@ public class EmployeeDAOImpl implements EmployeeDAO {
 
     @Override
     public void changeFirstNameByID(Integer id, String firstName) throws SQLException {
-        String sqlMessage = "update employee set first_name = ? where id = ?;";
-        try (PreparedStatement preparedStatement = getPreparedStatement(sqlMessage)) {
-            preparedStatement.setString(1, firstName);
-            preparedStatement.setInt(2, id);
-            preparedStatement.execute();
-        }
-
+        updateStringColumnByID(id, "first_name", firstName);
     }
 
     @Override
     public void changeLastNameByID(Integer id, String lastName) throws SQLException {
-        String sqlMessage = "update employee set last_name = ? where id = ?;";
-        try (PreparedStatement preparedStatement = getPreparedStatement(sqlMessage)) {
-            preparedStatement.setString(1, lastName);
-            preparedStatement.setInt(2, id);
-            preparedStatement.execute();
-        }
-
+        updateStringColumnByID(id, "last_name", lastName);
     }
 
     @Override
     public void changeGenderByID(Integer id, String gender) throws SQLException {
-        String sqlMessage = "update employee set gender = ? where id = ?;";
-        try (PreparedStatement preparedStatement = getPreparedStatement(sqlMessage)) {
-            preparedStatement.setString(1, gender);
-            preparedStatement.setInt(2, id);
-            preparedStatement.execute();
-        }
-
+        updateStringColumnByID(id, "gender", gender);
     }
+
 
     @Override
     public void changeAgeByID(Integer id, Integer age) throws SQLException {
@@ -142,6 +124,16 @@ public class EmployeeDAOImpl implements EmployeeDAO {
     private PreparedStatement getPreparedStatement(String statement) throws SQLException {
         Connection connection = DriverManager.getConnection(url, username, password);
         return connection.prepareStatement(statement);
+    }
+
+    private void updateStringColumnByID(Integer id, String column, String newValue) throws SQLException {
+        String sqlMessage = "update employee set " + column + " = ? where id = ?;";
+        try (PreparedStatement preparedStatement = getPreparedStatement(sqlMessage)) {
+            preparedStatement.setString(1, newValue);
+            preparedStatement.setInt(2, id);
+            preparedStatement.execute();
+        }
+
     }
 
 }

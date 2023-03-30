@@ -15,8 +15,8 @@ public class Application {
 
         // =========TASK 1===========
 
-        Integer id = 1;
-        String sqlCommand = "select all (last_name, first_name, gender, city_name) " +
+        int id = 1;
+        String sqlCommand = "select (last_name, first_name, gender, city_name) " +
                 "from employee " +
                 "join city on city.city_id = employee.city_id " +
                 "where id = ?;";
