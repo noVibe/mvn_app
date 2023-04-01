@@ -1,60 +1,43 @@
 package application;
 
-import task2bones.City;
-import task2bones.Employee;
-import task2bones.EmployeeDAO;
-import task2bones.EmployeeDAOImpl;
+import model.City;
+import dao.CityDAOImpl;
+import model.Employee;
+import dao.EmployeeDAOImpl;
+import dao.*;
 
-import java.sql.*;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 
 public class Application {
-    public static void main(String[] args) throws SQLException {
-        final String url = "jdbc:postgresql://localhost:5432/skypro";
-        final String username = "postgres";
-        final String password = "postgres";
+    public static void main(String[] args)  {
 
-        // =========TASK 1===========
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("emf1");
+        EntityManager manager = emf.createEntityManager();
 
-        int id = 1;
-        String sqlCommand = "select (last_name, first_name, gender, city_name) " +
-                "from employee " +
-                "join city on city.city_id = employee.city_id " +
-                "where id = ?;";
+        EmployeeDAO employeeDAO = new EmployeeDAOImpl(manager);
+        CityDAO cityDAO = new CityDAOImpl(manager);
+        City city = new City("MILAN");
+        cityDAO.addCity(city);
+        Employee employee = new Employee("Kate", "Sour", "female", 30, city);
+        employeeDAO.changeAge(employee, 30); // запись в бд не появится без предварительного добавления:
+        employeeDAO.addEmployee(employee);
+        employeeDAO.addEmployee(employee); // повторно не добавит
+        employeeDAO.changeFirstName(employee, "Liz");
+        employeeDAO.changeFirstName(employeeDAO.getEmployeeByID(9), "Rob");
+        System.out.println(employeeDAO.getEmployeeList());
+        employeeDAO.removeEmployeeByID(8);
+        System.out.println(employee.getCity());
+        employeeDAO.removeEmployeeByID(3);
+        System.out.println(city);
+        city = cityDAO.getCityByID(4);
 
-        String anotherCommand = "select * from employee where id = ?;";
-        try (
-                Connection connection = DriverManager.getConnection(url, username, password);
-                PreparedStatement preparedStatement = connection.prepareStatement(sqlCommand)) {
-            preparedStatement.setInt(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            System.out.println(resultSet.getString(1));
+        cityDAO.removeCityByID(4);
+        System.out.println(city);
 
-            PreparedStatement another = connection.prepareStatement(anotherCommand);
-            another.setInt(1, id);
-            resultSet = another.executeQuery();
-            resultSet.next();
-            System.out.println(resultSet.getString("first_name"));
-
-            //ПОЧЕМУ JOIN ВСЕ КЛАДЕТ В ОДНУ СТРОКУ, А НЕ ПО КОЛОНКАМ?
-
-            //========TASK 2==========
-
-            EmployeeDAO dao = new EmployeeDAOImpl(url, username, password);
-            System.out.println(dao.getEmployeeList());
-            System.out.println(dao.getEmployeeByID(2));
-            dao.changeAgeByID(2, 45);
-            dao.changeFirstNameByID(2, "Todd");
-            dao.changeLastNameByID(2, "Packer" );
-            dao.changeGenderByID(2, "male");
-            City c = dao.getCityByEmployeeID(1);
-            Employee e = new Employee(20, "Jim", "Carr", "male", 35, c);
-            dao.addEmployee(e);
-            dao.changeCityByID(2, c);
-            System.out.println(dao.getEmployeeByID(2));
-            System.out.println(dao.getEmployeeByID(20));
-
+        manager.close();
+        emf.close();
         }
     }
 
-}
